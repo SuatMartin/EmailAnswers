@@ -4,7 +4,6 @@ import '../services/update_role_service.dart'; // Import the update role service
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/admin_check_service.dart';
 
-
 class UsersPage extends StatefulWidget {
   const UsersPage({super.key});
 
@@ -37,20 +36,20 @@ class _UsersPageState extends State<UsersPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Deletion'),
-          content: Text('Are you sure you want to delete User #$userId?'),
+          title: Text('Confirmar'),
+          content: Text('Esta seguro que quiere remover el usuario #$userId?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(false);
               },
-              child: Text('Cancel'),
+              child: Text('Cancelar'),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.of(context).pop(true);
               },
-              child: Text('Delete'),
+              child: Text('Borrar', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -60,18 +59,16 @@ class _UsersPageState extends State<UsersPage> {
     if (confirmDelete == true) {
       try {
         await deleteUser(userId);
-
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('User #$userId deleted successfully')),
+          SnackBar(content: Text('Usuario #$userId removido')),
         );
-
         // Refresh the user list after deletion
         setState(() {
           futureUsers = fetchUsers();
         });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete user: $e')),
+          SnackBar(content: Text('Fallo de borrar: $e')),
         );
       }
     }
@@ -80,21 +77,18 @@ class _UsersPageState extends State<UsersPage> {
   // Function to update the role of a user
   Future<void> _updateUserRole(int userId, String currentRole) async {
     String newRole = currentRole == 'user' ? 'admin' : 'user'; // Toggle role
-
     try {
       await updateUserRole(userId, newRole);
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User #$userId role updated to $newRole')),
+        SnackBar(content: Text('Rol de usuario #$userId cambio a $newRole')),
       );
-
       // Refresh the user list after role update
       setState(() {
         futureUsers = fetchUsers();
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update role: $e')),
+        SnackBar(content: Text('Actualizacion de rol fallo: $e')),
       );
     }
   }
@@ -102,10 +96,21 @@ class _UsersPageState extends State<UsersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.green[100], // ✅ Light green background
       appBar: AppBar(
-        title: Text('Users List'),
+        backgroundColor: Colors.green, // ✅ Green AppBar
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/IEPR.png', // ✅ Add your logo here
+              height: 40, // Adjust height as needed
+            ),
+            SizedBox(width: 10),
+            Text('Lista de Usuarios'),
+          ],
+        ),
         centerTitle: true,
-        backgroundColor: Colors.blue[100],
       ),
       body: FutureBuilder<List<User>>(
         future: futureUsers,
@@ -123,41 +128,47 @@ class _UsersPageState extends State<UsersPage> {
             return ListView.separated(
               itemCount: users.length,
               itemBuilder: (context, index) {
-                return ListTile(
-                  tileColor: Colors.white,
-                  title: Text('User #${index + 1}: ${users[index].username}'),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Email: ${users[index].email}',
-                        style: TextStyle(fontSize: 14),
-                      ),
-                      Text(
-                        'Role: ${users[index].role}', // Display the role here
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          _showDeleteDialog(users[index].userId);
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.person_add_alt_1,
-                          color: users[index].role == 'admin' ? Colors.blue : Colors.green,
+                return Container(
+                  color: Colors.white, // ✅ White background for readability
+                  child: ListTile(
+                    tileColor: Colors.white,
+                    title: Text(
+                      'Usuario #${index + 1}: ${users[index].username}',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Email: ${users[index].email}',
+                          style: TextStyle(fontSize: 14),
                         ),
-                        onPressed: () {
-                          _updateUserRole(users[index].userId, users[index].role);
-                        },
-                      ),
-                    ],
+                        Text(
+                          'Rol: ${users[index].role}',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            _showDeleteDialog(users[index].userId);
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            Icons.person_add_alt_1,
+                            color: users[index].role == 'admin' ? Colors.blue : Colors.green,
+                          ),
+                          onPressed: () {
+                            _updateUserRole(users[index].userId, users[index].role);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -166,7 +177,7 @@ class _UsersPageState extends State<UsersPage> {
               },
             );
           } else {
-            return Center(child: Text('No users found.'));
+            return Center(child: Text('No hay usuarios.'));
           }
         },
       ),

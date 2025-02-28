@@ -27,13 +27,15 @@ class _ManagePasswordsScreenState extends State<ManagePasswordsScreen> {
 
     if (username.isEmpty || email.isEmpty || newPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("All fields are required.")),
+        SnackBar(content: Text("Todos los campos son obligatorios.")),
       );
       return;
     }
 
     final serverUrl = dotenv.env['SERVER_URL'];
     final passupdt = dotenv.env['PASS_UPDATE_ENDPOINT'];
+    final adminChange = dotenv.env['ADMIN_CHANGE_ENDPOINT'];
+    
     final response = await http.put(
       Uri.parse('$serverUrl$passupdt'),
       headers: {'Content-Type': 'application/json'},
@@ -46,6 +48,13 @@ class _ManagePasswordsScreenState extends State<ManagePasswordsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(responseBody['message'])),
       );
+      
+      // Log the admin change into admin_changed table
+      await http.post(
+        Uri.parse('$serverUrl$adminChange'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'username': username, 'email': email}),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(responseBody['error'])),
@@ -57,32 +66,46 @@ class _ManagePasswordsScreenState extends State<ManagePasswordsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Manage Passwords'),
+        title: Text('Gestionar Contraseñas'),
         centerTitle: true,
-        backgroundColor: Colors.blue[100],
+        backgroundColor: Colors.green, // Green top bar
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Image.asset(
+              'assets/IEPR.png', // Make sure to add the PNG image in your assets folder
+              height: 40,
+            ),
+          ),
+        ],
       ),
-      body: Padding(
+      body: Container(
+        color: Colors.green[50], // Light green background
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: usernameController,
-              decoration: InputDecoration(labelText: 'Username'),
+              decoration: InputDecoration(labelText: 'Nombre de usuario'),
             ),
             TextField(
               controller: emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: 'Correo electrónico'),
             ),
             TextField(
               controller: newPasswordController,
-              decoration: InputDecoration(labelText: 'New Password'),
+              decoration: InputDecoration(labelText: 'Nueva contraseña'),
               obscureText: true,
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: updatePassword,
-              child: Text('Update Password'),
+              child: Text('Actualizar contraseña'),
+            ),
+            SizedBox(height: 20),
+            Image.asset(
+              'assets/IEPR.png', // Add another image below the button
+              height: 100,
             ),
           ],
         ),

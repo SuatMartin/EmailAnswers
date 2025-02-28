@@ -23,9 +23,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
     setState(() {
       if (role == 'admin') {
-        _isAdmin = true; // If role is admin, allow role selection
+        _isAdmin = true;
       } else {
-        _role = 'user'; // If not admin, keep the role as 'user'
+        _role = 'user'; 
       }
     });
   }
@@ -33,6 +33,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   Future<void> _register() async {
     final serverUrl = dotenv.env['SERVER_URL'];
     final regendpoint = dotenv.env['REGISTER_ENDPOINT'];
+    final adminChange = dotenv.env['ADMIN_CHANGE_ENDPOINT'];
+
     final response = await http.post(
       Uri.parse('$serverUrl$regendpoint'),
       headers: {'Content-Type': 'application/json'},
@@ -47,6 +49,18 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     final responseData = json.decode(response.body);
 
     if (response.statusCode == 201) {
+      // ✅ Log admin action if the current user is an admin
+      if (_isAdmin) {
+        await http.post(
+          Uri.parse('$serverUrl$adminChange'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'username': _nameController.text,
+            'email': _usernameController.text, // The new user's email
+          }),
+        );
+      }
+
       Navigator.pushReplacementNamed(context, '/login');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -64,44 +78,74 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Create Account')),
-      body: Padding(
+      appBar: AppBar(
+        title: Text('Crear Cuenta'),
+        centerTitle: true,
+        backgroundColor: Colors.green, 
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Image.asset(
+              'assets/IEPR.png', 
+              height: 40,
+            ),
+          ),
+        ],
+      ),
+      body: Container(
+        color: Colors.green[50], 
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: _usernameController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: 'Correo electrónico'),
             ),
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
+              decoration: InputDecoration(labelText: 'Contraseña'),
               obscureText: true,
             ),
             TextField(
               controller: _nameController,
-              decoration: InputDecoration(labelText: 'Name'),
+              decoration: InputDecoration(labelText: 'Nombre'),
             ),
-            if (_isAdmin) // Show role dropdown only if the user is an admin
-              DropdownButton<String>(
-                value: _role,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _role = newValue!;
-                  });
-                },
-                items: <String>['user', 'admin']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
+            if (_isAdmin) 
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5.0),
+                  color: Colors.white, 
+                ),
+                child: DropdownButton<String>(
+                  value: _role,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _role = newValue!;
+                    });
+                  },
+                  items: <String>['user', 'admin']
+                      .map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: TextStyle(color: Colors.black), 
+                      ),
+                    );
+                  }).toList(),
+                  dropdownColor: Colors.white, 
+                  style: TextStyle(color: Colors.white), 
+                ),
               ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _register,
-              child: Text('Create Account'),
+              child: Text('Crear Cuenta'),
+            ),
+            SizedBox(height: 20),
+            Image.asset(
+              'assets/IEPR.png', 
+              height: 100,
             ),
           ],
         ),
